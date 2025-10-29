@@ -10,6 +10,9 @@ A React Native mobile app that displays pothole locations on an interactive map 
 ✅ **Real-time Data** - Firebase Firestore for live pothole location updates  
 ✅ **Weather Integration** - WeatherAPI.com for current conditions and forecasts  
 ✅ **AI Travel Tips** - Google Gemini AI generates contextual packing & safety advice  
+✅ **🚨 Crash Detection** - Hybrid rule-based crash detector using accelerometer & gyroscope  
+✅ **User Location** - Auto-center on current position with recenter button  
+✅ **Map Compass** - Shows orientation, tap to reset to North  
 ✅ **Free APIs** - Nominatim (geocoding), OSRM (routing), WeatherAPI, Gemini AI  
 ✅ **Clean Architecture** - Services, hooks, and components properly separated  
 
@@ -23,6 +26,7 @@ A React Native mobile app that displays pothole locations on an interactive map 
 | Geocoding | Nominatim (OpenStreetMap) | Address → coordinates conversion |
 | Weather | WeatherAPI.com | Weather data, forecasts, alerts |
 | AI | Google Gemini | Intelligent travel tips generation |
+| Safety | expo-sensors | Crash detection (accelerometer + gyroscope) |
 | Backend | Firebase Firestore | Pothole data storage |
 | Language | TypeScript | Type safety |
 

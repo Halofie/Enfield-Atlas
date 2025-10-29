@@ -1,5 +1,7 @@
+import { CrashDetectionControl } from '@/components/map/crash-detection-control';
 import { MapDisplay } from '@/components/map/map-display';
 import { RouteInputs } from '@/components/map/route-inputs';
+import { useCrashDetection } from '@/hooks/use-crash-detection';
 import { useMapRouting } from '@/hooks/use-map-routing';
 import { usePotholeMarkers } from '@/hooks/use-pothole-markers';
 import { Pothole } from '@/types/pothole.types';
@@ -26,6 +28,28 @@ export default function MapScreen() {
   
   // Use custom hook for pothole data
   const { potholes } = usePotholeMarkers();
+
+  // Use custom hook for crash detection
+  const crashDetection = useCrashDetection(false, (crash) => {
+    Alert.alert(
+      '🚨 Crash Detected!',
+      `Severity: ${crash.severity.toUpperCase()}\n` +
+      `Acceleration: ${crash.acceleration.magnitude.toFixed(2)}G\n` +
+      `Rotation: ${crash.rotation.magnitude.toFixed(1)}°/s\n\n` +
+      `Are you okay? Emergency services can be contacted if needed.`,
+      [
+        { text: "I'm OK", style: 'cancel' },
+        { 
+          text: 'Call Emergency', 
+          onPress: () => {
+            // TODO: Implement emergency call
+            Alert.alert('Emergency', 'Emergency services contact feature coming soon');
+          },
+          style: 'destructive'
+        }
+      ]
+    );
+  });
 
   // Get user's current location on mount
   useEffect(() => {
@@ -166,6 +190,19 @@ export default function MapScreen() {
         onPotholePress={handlePotholeMarkerPress}
         userLocation={userLocation}
         onRegionChange={handleRegionChange}
+      />
+
+      {/* Crash Detection Control */}
+      <CrashDetectionControl
+        isMonitoring={crashDetection.isMonitoring}
+        onToggle={() => {
+          if (crashDetection.isMonitoring) {
+            crashDetection.stopMonitoring();
+          } else {
+            crashDetection.startMonitoring();
+          }
+        }}
+        baseline={crashDetection.baseline}
       />
 
       {/* Compass button - below recenter button */}
