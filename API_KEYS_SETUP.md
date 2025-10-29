@@ -46,14 +46,22 @@ const WEATHER_API_KEY = 'your_actual_api_key_here';
 
 ### Configure in App:
 
-Open `services/gemini.service.ts` and replace:
-```typescript
-const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
-```
-with:
-```typescript
-const GEMINI_API_KEY = 'your_actual_api_key_here';
-```
+1. **Install the SDK** (already done):
+   ```bash
+   npm install @google/generative-ai
+   ```
+
+2. **Update the API key**:
+   Open `services/gemini.service.ts` and replace:
+   ```typescript
+   const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
+   ```
+   with:
+   ```typescript
+   const GEMINI_API_KEY = 'your_actual_api_key_here';
+   ```
+
+**Note**: The app now uses the official `@google/generative-ai` SDK instead of direct API calls for better reliability! 🚀
 
 ---
 

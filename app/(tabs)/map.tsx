@@ -3,12 +3,19 @@ import { RouteInputs } from '@/components/map/route-inputs';
 import { useMapRouting } from '@/hooks/use-map-routing';
 import { usePotholeMarkers } from '@/hooks/use-pothole-markers';
 import { Pothole } from '@/types/pothole.types';
-import React, { useRef, useState } from 'react';
-import { Alert, Keyboard, SafeAreaView, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Keyboard, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function MapScreen() {
   const [sourceText, setSourceText] = useState('');
   const [destText, setDestText] = useState('');
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [mapHeading, setMapHeading] = useState(0); // Track map rotation
   
   // Use a loose any here to avoid a hard dependency on react-native-maps types in the
   // starter; once the dependency and types are installed this can be tightened.
@@ -18,7 +25,38 @@ export default function MapScreen() {
   const { sourceCoord, destCoord, routeCoords, loading, calculateRoute } = useMapRouting();
   
   // Use custom hook for pothole data
-  const { potholes, loading: potholesLoading, error: potholesError } = usePotholeMarkers();
+  const { potholes } = usePotholeMarkers();
+
+  // Get user's current location on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('Location permission denied');
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+        const coords = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        setUserLocation(coords);
+
+        // Center map on user location
+        if (mapRef.current) {
+          mapRef.current.animateToRegion({
+            ...coords,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }, 1000);
+        }
+      } catch (error) {
+        console.error('Error getting location:', error);
+      }
+    })();
+  }, []);
 
   async function onRoutePress() {
     Keyboard.dismiss();
@@ -59,6 +97,47 @@ export default function MapScreen() {
     );
   }
 
+  // Recenter map to user's current location
+  async function recenterToUserLocation() {
+    try {
+      const location = await Location.getCurrentPositionAsync({});
+      const coords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      setUserLocation(coords);
+
+      if (mapRef.current) {
+        mapRef.current.animateToRegion({
+          ...coords,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }, 500);
+      }
+    } catch (error) {
+      console.error('Error getting location:', error);
+      Alert.alert('Location Error', 'Unable to get your current location');
+    }
+  }
+
+  // Reset map to point north (heading = 0)
+  function resetToNorth() {
+    if (mapRef.current) {
+      mapRef.current.animateCamera({
+        heading: 0,
+        pitch: 0,
+      }, { duration: 300 });
+      setMapHeading(0);
+    }
+  }
+
+  // Handle map region changes to track heading
+  function handleRegionChange(region: any) {
+    if (region.heading !== undefined) {
+      setMapHeading(region.heading);
+    }
+  }
+
   const initialRegion = {
     latitude: 37.7749,
     longitude: -122.4194,
@@ -85,11 +164,79 @@ export default function MapScreen() {
         routeCoords={routeCoords}
         potholes={potholes}
         onPotholePress={handlePotholeMarkerPress}
+        userLocation={userLocation}
+        onRegionChange={handleRegionChange}
       />
+
+      {/* Compass button - below recenter button */}
+      <TouchableOpacity 
+        style={styles.compassButton}
+        onPress={resetToNorth}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.compassButtonInner, { transform: [{ rotate: `${-mapHeading}deg` }] }]}>
+          <Ionicons name="compass-outline" size={28} color="#1E88E5" />
+        </View>
+      </TouchableOpacity>
+
+      {/* Recenter button - like Google Maps */}
+      <TouchableOpacity 
+        style={styles.recenterButton}
+        onPress={recenterToUserLocation}
+        activeOpacity={0.7}
+      >
+        <View style={styles.recenterButtonInner}>
+          <Ionicons name="locate" size={24} color="#1E88E5" />
+        </View>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  recenterButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: 120,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  recenterButtonInner: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  compassButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: 190, // Above the recenter button
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  compassButtonInner: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

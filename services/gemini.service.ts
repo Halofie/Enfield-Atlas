@@ -5,12 +5,14 @@
  * Get your free API key from: https://ai.google.dev/
  */
 
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { WeatherAlert, WeatherData, WeatherForecast } from './weather.service';
 
 // Gemini API key - Get from https://ai.google.dev/
 const GEMINI_API_KEY = 'AIzaSyAHtFOuTX9qIqU_LWSEm8O2GR_G5uWVi4s'; // Replace with your key or use env var
-// Using gemini-1.5-flash for faster, more reliable responses
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
+
+// Initialize the Gemini AI client
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 export interface TravelTips {
   clothing: string[];
@@ -27,8 +29,8 @@ export async function getAITravelTips(
   forecast: WeatherForecast[]
 ): Promise<TravelTips> {
   try {
-    // If no API key, use fallback logic
-    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
+    // If no API key or client, use fallback logic
+    if (!genAI) {
       console.log('No Gemini API key set, using fallback tips');
       return getFallbackTravelTips(weather, alerts);
     }
@@ -38,40 +40,19 @@ export async function getAITravelTips(
 
     console.log('Calling Gemini API for travel tips...');
 
-    // Call Gemini API
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        },
-      }),
-    });
+    // Get the generative model (using gemini-1.5-flash for speed)
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API error response:', errorText);
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    // Generate content
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const aiResponse = response.text();
 
     if (!aiResponse) {
-      console.error('Gemini API returned no content:', JSON.stringify(data));
       throw new Error('No response from Gemini');
     }
+
+    console.log('✅ Received AI travel tips from Gemini');
 
     // Parse AI response into structured tips
     return parseAIResponse(aiResponse);

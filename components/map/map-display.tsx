@@ -22,6 +22,8 @@ interface MapDisplayProps {
   routeCoords: Coordinate[];
   potholes?: Pothole[];
   onPotholePress?: (pothole: Pothole) => void;
+  userLocation?: { latitude: number; longitude: number } | null;
+  onRegionChange?: (region: any) => void;
 }
 
 /**
@@ -36,6 +38,8 @@ export function MapDisplay({
   routeCoords,
   potholes = [],
   onPotholePress,
+  userLocation,
+  onRegionChange,
 }: MapDisplayProps) {
   return (
     <MapView
@@ -44,7 +48,12 @@ export function MapDisplay({
       style={styles.map}
       initialRegion={initialRegion}
       showsUserLocation={true}
-      showsMyLocationButton={true}>
+      showsMyLocationButton={false}
+      rotateEnabled={true}
+      pitchEnabled={true}
+      showsCompass={false}
+      onRegionChange={onRegionChange}
+      onRegionChangeComplete={onRegionChange}>
       {/* OpenStreetMap tile layer */}
       <UrlTile
         urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
