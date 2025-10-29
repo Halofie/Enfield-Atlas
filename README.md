@@ -4,6 +4,7 @@ A React Native mobile app that displays pothole locations on an interactive map 
 
 ## 📱 Features
 
+✅ **Google Authentication** - Secure sign-in with Google OAuth 2.0  
 ✅ **Interactive Map** - OpenStreetMap tiles (free, no API key required)  
 ✅ **Route Planning** - Enter source & destination to get driving directions  
 ✅ **Pothole Markers** - Display AI-detected potholes with severity indicators  
@@ -21,6 +22,7 @@ A React Native mobile app that displays pothole locations on an interactive map 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | Framework | React Native (Expo) | Cross-platform mobile development |
+| Authentication | Firebase Auth + Google OAuth | Secure user authentication |
 | Map | react-native-maps + OpenStreetMap | Free map rendering |
 | Routing | OSRM (Open Source Routing Machine) | Free route calculation |
 | Geocoding | Nominatim (OpenStreetMap) | Address → coordinates conversion |
@@ -105,7 +107,7 @@ pothole-map/## Get a fresh project
    npm install
    ```
 
-3. **Set up Firebase** (Required for pothole markers)
+3. **Set up Firebase** (Required for authentication and pothole markers)
    
    Follow the detailed guide: [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md)
    
@@ -115,12 +117,22 @@ pothole-map/## Get a fresh project
    - Copy your config to `config/firebase.config.ts`
    - Add sample pothole data (see Firebase guide)
 
-4. **Start the development server**
+4. **Set up Google Authentication** (Required for user login)
+   
+   Follow the detailed guide: [`docs/GOOGLE_AUTH_SETUP.md`](docs/GOOGLE_AUTH_SETUP.md)
+   
+   Quick steps:
+   - Enable Google Sign-In in Firebase Console
+   - Get OAuth Client IDs (Web, Android, iOS)
+   - Update `services/auth.service.ts` with your Client IDs
+   - Configure OAuth consent screen in Google Cloud Console
+
+5. **Start the development server**
    ```bash
    npx expo start
    ```
 
-5. **Run on your device**
+6. **Run on your device**
    - **iOS**: Press `i` or scan QR with Camera app
    - **Android**: Press `a` or scan QR with Expo Go app
    - **Web**: Press `w` (limited map functionality)

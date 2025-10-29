@@ -1,13 +1,32 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+// import { LoginScreen } from '@/components/auth';
 import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+// import { useAuth } from '@/hooks/use-auth';
 
 export default function HomeScreen() {
+  // Auth temporarily disabled - will re-enable after fixing React Native persistence
+  // const { user, loading, signOut, signInWithGoogle, error } = useAuth();
+
+  // Show login screen if not authenticated
+  // if (!user) {
+  //   return <LoginScreen signInWithGoogle={signInWithGoogle} loading={loading} error={error} />;
+  // }
+
+  // Show loading state while checking auth
+  const loading = false;
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4285F4" />
+      </View>
+    );
+  }
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -18,60 +37,52 @@ export default function HomeScreen() {
         />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
+        <ThemedText type="title">Welcome to Pothole Map!</ThemedText>
         <HelloWave />
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
+      {/* Authentication temporarily disabled - will add back after fixing React Native persistence */}
+      {/* <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Your Account</ThemedText>
+        <ThemedText>Email: {user.email}</ThemedText>
+        {user.photoURL && (
+          <Image
+            source={{ uri: user.photoURL }}
+            style={styles.profileImage}
+          />
+        )}
+        <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
+          <Text style={styles.signOutButtonText}>Sign Out</Text>
+        </TouchableOpacity>
+      </ThemedView> */}
+
+      {/* App Features */}
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
+        <ThemedText type="subtitle">🗺️ Map Features</ThemedText>
         <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+          Navigate to the <ThemedText type="defaultSemiBold">Map</ThemedText> tab to:
+        </ThemedText>
+        <ThemedText>• View real-time pothole locations</ThemedText>
+        <ThemedText>• Plan safe routes avoiding potholes</ThemedText>
+        <ThemedText>• Track your location with compass</ThemedText>
+        <ThemedText>• Enable crash detection for safety</ThemedText>
+      </ThemedView>
+
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">🌤️ Trip Planner</ThemedText>
+        <ThemedText>
+          Navigate to the <ThemedText type="defaultSemiBold">Trip Planner</ThemedText> tab to:
+        </ThemedText>
+        <ThemedText>• Check weather conditions along your route</ThemedText>
+        <ThemedText>• Get AI-powered travel tips</ThemedText>
+        <ThemedText>• Receive clothing and packing suggestions</ThemedText>
+      </ThemedView>
+
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">🚀 Getting Started</ThemedText>
+        <ThemedText>
+          Start by exploring the map or planning your trip. The app will guide you with real-time
+          alerts and safety features.
         </ThemedText>
       </ThemedView>
     </ParallaxScrollView>
@@ -79,6 +90,12 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -94,5 +111,24 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  profileImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginVertical: 8,
+  },
+  signOutButton: {
+    backgroundColor: '#f44336',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+  signOutButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

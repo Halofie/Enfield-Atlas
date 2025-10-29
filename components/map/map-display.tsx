@@ -1,8 +1,11 @@
+import { RouteSafetyAnalysis } from '@/services/safety-analysis.service';
 import { Pothole } from '@/types/pothole.types';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT, UrlTile } from 'react-native-maps';
 import { PotholeMarkers } from './pothole-markers';
+import { SafetyEstablishments } from './safety-establishments';
+import { SafetyPolylines } from './safety-polylines';
 
 export interface Coordinate {
   latitude: number;
@@ -24,6 +27,7 @@ interface MapDisplayProps {
   onPotholePress?: (pothole: Pothole) => void;
   userLocation?: { latitude: number; longitude: number } | null;
   onRegionChange?: (region: any) => void;
+  safetyAnalysis?: RouteSafetyAnalysis | null;
 }
 
 /**
@@ -40,6 +44,7 @@ export function MapDisplay({
   onPotholePress,
   userLocation,
   onRegionChange,
+  safetyAnalysis,
 }: MapDisplayProps) {
   return (
     <MapView
@@ -65,9 +70,19 @@ export function MapDisplay({
       {/* Pothole markers */}
       <PotholeMarkers potholes={potholes} onMarkerPress={onPotholePress} />
 
+      {/* Safety analysis overlays - render before regular route */}
+      {safetyAnalysis && (
+        <>
+          <SafetyPolylines segments={safetyAnalysis.segments} isNightTime={safetyAnalysis.isNightTime} />
+          <SafetyEstablishments establishments={safetyAnalysis.allEstablishments} />
+        </>
+      )}
+
       {sourceCoord && <Marker coordinate={sourceCoord} title="Source" pinColor="green" />}
       {destCoord && <Marker coordinate={destCoord} title="Destination" pinColor="red" />}
-      {routeCoords.length > 0 && (
+      
+      {/* Regular route - only show if no safety analysis active */}
+      {routeCoords.length > 0 && !safetyAnalysis && (
         <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor="#007AFF" />
       )}
     </MapView>

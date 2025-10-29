@@ -16,7 +16,6 @@
 
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-// import { getAuth } from 'firebase/auth'; // Uncomment when you need authentication
 
 // TODO: Replace with your Firebase project configuration
 // Get this from: Firebase Console > Project Settings > Your apps > Web app
@@ -35,6 +34,9 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize services
 export const db = getFirestore(app);
-// export const auth = getAuth(app); // Uncomment when you enable Authentication in Firebase Console
+
+// Auth is temporarily disabled due to React Native persistence issues
+// We'll add it back with proper configuration
+export const auth = null as any;
 
 export default app;

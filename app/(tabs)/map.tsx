@@ -1,9 +1,11 @@
 import { CrashDetectionControl } from '@/components/map/crash-detection-control';
 import { MapDisplay } from '@/components/map/map-display';
 import { RouteInputs } from '@/components/map/route-inputs';
+import { SafetyScoreCard } from '@/components/map/safety-score-card';
 import { useCrashDetection } from '@/hooks/use-crash-detection';
 import { useMapRouting } from '@/hooks/use-map-routing';
 import { usePotholeMarkers } from '@/hooks/use-pothole-markers';
+import { useRouteSafety } from '@/hooks/use-route-safety';
 import { Pothole } from '@/types/pothole.types';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -18,6 +20,7 @@ export default function MapScreen() {
     longitude: number;
   } | null>(null);
   const [mapHeading, setMapHeading] = useState(0); // Track map rotation
+  const [showSafetyView, setShowSafetyView] = useState(false); // Toggle safety features
   
   // Use a loose any here to avoid a hard dependency on react-native-maps types in the
   // starter; once the dependency and types are installed this can be tightened.
@@ -28,6 +31,9 @@ export default function MapScreen() {
   
   // Use custom hook for pothole data
   const { potholes } = usePotholeMarkers();
+
+  // Use custom hook for route safety analysis
+  const { safetyAnalysis, analyzeSafety, clearAnalysis } = useRouteSafety();
 
   // Use custom hook for crash detection
   const crashDetection = useCrashDetection(false, (crash) => {
@@ -107,6 +113,25 @@ export default function MapScreen() {
           });
         }
       }, 300);
+
+      // Analyze route safety if safety view is enabled
+      if (showSafetyView) {
+        analyzeSafety(result.route);
+      }
+    }
+  }
+
+  // Toggle safety view
+  function toggleSafetyView() {
+    const newState = !showSafetyView;
+    setShowSafetyView(newState);
+    
+    if (newState && routeCoords.length > 0) {
+      // Analyze current route
+      analyzeSafety(routeCoords);
+    } else if (!newState) {
+      // Clear safety analysis when disabled
+      clearAnalysis();
     }
   }
 
@@ -190,7 +215,13 @@ export default function MapScreen() {
         onPotholePress={handlePotholeMarkerPress}
         userLocation={userLocation}
         onRegionChange={handleRegionChange}
+        safetyAnalysis={showSafetyView ? safetyAnalysis : undefined}
       />
+
+      {/* Safety Score Card */}
+      {showSafetyView && safetyAnalysis && (
+        <SafetyScoreCard analysis={safetyAnalysis} />
+      )}
 
       {/* Crash Detection Control */}
       <CrashDetectionControl
@@ -204,6 +235,21 @@ export default function MapScreen() {
         }}
         baseline={crashDetection.baseline}
       />
+
+      {/* Safety toggle button */}
+      <TouchableOpacity 
+        style={[styles.safetyButton, showSafetyView && styles.safetyButtonActive]}
+        onPress={toggleSafetyView}
+        activeOpacity={0.7}
+      >
+        <View style={styles.safetyButtonInner}>
+          <Ionicons 
+            name={showSafetyView ? "shield-checkmark" : "shield-outline"} 
+            size={24} 
+            color={showSafetyView ? "#4CAF50" : "#1E88E5"} 
+          />
+        </View>
+      </TouchableOpacity>
 
       {/* Compass button - below recenter button */}
       <TouchableOpacity 
@@ -271,6 +317,31 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   compassButtonInner: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  safetyButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: 260, // Above the compass button
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  safetyButtonActive: {
+    backgroundColor: '#E8F5E9', // Light green background when active
+  },
+  safetyButtonInner: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
