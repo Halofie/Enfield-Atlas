@@ -1,52 +1,30 @@
-# 🗺️ Pothole Map - Smart Pothole Detection & Navigation# Welcome to your Expo app 👋
+# 🗺️ Pothole Map - Smart Pothole Detection & Navigation
 
+A React Native mobile app that displays pothole locations on an interactive map with routing capabilities. Potholes are detected by AI from satellite imagery and stored in Firebase for real-time updates. Includes AI-powered trip planning with weather alerts and smart packing recommendations.
 
+## 📱 Features
 
-A React Native mobile app that displays pothole locations on an interactive map with routing capabilities. Potholes are detected by AI from satellite imagery and stored in Firebase for real-time updates.This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
-
-
-## 📱 Features## Get started
-
-
-
-✅ **Interactive Map** - OpenStreetMap tiles (free, no API key required)  1. Install dependencies
-
+✅ **Interactive Map** - OpenStreetMap tiles (free, no API key required)  
 ✅ **Route Planning** - Enter source & destination to get driving directions  
-
-✅ **Pothole Markers** - Display AI-detected potholes with severity indicators     ```bash
-
-✅ **Real-time Data** - Firebase Firestore for live pothole location updates     npm install
-
-✅ **Free APIs** - Uses Nominatim (geocoding) and OSRM (routing)     ```
-
+✅ **Pothole Markers** - Display AI-detected potholes with severity indicators  
+✅ **Real-time Data** - Firebase Firestore for live pothole location updates  
+✅ **Weather Integration** - WeatherAPI.com for current conditions and forecasts  
+✅ **AI Travel Tips** - Google Gemini AI generates contextual packing & safety advice  
+✅ **Free APIs** - Nominatim (geocoding), OSRM (routing), WeatherAPI, Gemini AI  
 ✅ **Clean Architecture** - Services, hooks, and components properly separated  
-
-2. Start the app
 
 ## 🏗️ Tech Stack
 
-   ```bash
-
-| Layer | Technology | Purpose |   npx expo start
-
-|-------|-----------|---------|   ```
-
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
 | Framework | React Native (Expo) | Cross-platform mobile development |
-
-| Map | react-native-maps + OpenStreetMap | Free map rendering |In the output, you'll find options to open the app in a
-
+| Map | react-native-maps + OpenStreetMap | Free map rendering |
 | Routing | OSRM (Open Source Routing Machine) | Free route calculation |
-
-| Geocoding | Nominatim (OpenStreetMap) | Address → coordinates conversion |- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-
-| Backend | Firebase Firestore | Pothole data storage |- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-
-| Language | TypeScript | Type safety |- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-## 📂 Project Structure
+| Geocoding | Nominatim (OpenStreetMap) | Address → coordinates conversion |
+| Weather | WeatherAPI.com | Weather data, forecasts, alerts |
+| AI | Google Gemini | Intelligent travel tips generation |
+| Backend | Firebase Firestore | Pothole data storage |
+| Language | TypeScript | Type safety |
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
