@@ -1,134 +1,155 @@
-import { Image } from 'expo-image';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+﻿/**
+ * Home Screen - Journey Feed
+ * Social feed for sharing journey experiences
+ */
 
-// import { LoginScreen } from '@/components/auth';
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-// import { useAuth } from '@/hooks/use-auth';
+import { CreatePostModal } from '@/components/journey/create-post-modal';
+import { JourneyFeed } from '@/components/journey/journey-feed';
+import {
+  createJourneyPost,
+  fetchJourneyPosts,
+  likeJourneyPost,
+  testFirebaseConnection,
+} from '@/services/journey.service';
+import { CreatePostData, JourneyPost } from '@/types/journey.types';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
-  // Auth temporarily disabled - will re-enable after fixing React Native persistence
-  // const { user, loading, signOut, signInWithGoogle, error } = useAuth();
+  const [posts, setPosts] = useState<JourneyPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [lastDoc, setLastDoc] = useState<any>(null);
 
-  // Show login screen if not authenticated
-  // if (!user) {
-  //   return <LoginScreen signInWithGoogle={signInWithGoogle} loading={loading} error={error} />;
-  // }
+  // Test Firebase on mount
+  useEffect(() => {
+    testFirebaseConnection();
+    loadInitialPosts();
+  }, []);
 
-  // Show loading state while checking auth
-  const loading = false;
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4285F4" />
-      </View>
-    );
-  }
+  const loadInitialPosts = async () => {
+    try {
+      setLoading(true);
+      const { posts: initialPosts, lastDoc: newLastDoc } = await fetchJourneyPosts();
+      setPosts(initialPosts);
+      setLastDoc(newLastDoc);
+    } catch (error) {
+      console.error('Error loading posts:', error);
+      Alert.alert('Error', 'Could not load posts. Check Firebase configuration.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      const { posts: freshPosts, lastDoc: newLastDoc } = await fetchJourneyPosts();
+      setPosts(freshPosts);
+      setLastDoc(newLastDoc);
+    } catch (error) {
+      console.error('Error refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (!lastDoc) return;
+    try {
+      const { posts: morePosts, lastDoc: newLastDoc } = await fetchJourneyPosts(lastDoc);
+      setPosts((prev) => [...prev, ...morePosts]);
+      setLastDoc(newLastDoc);
+    } catch (error) {
+      console.error('Error loading more posts:', error);
+    }
+  };
+
+  const handleCreatePost = async (data: CreatePostData) => {
+    try {
+      const userId = 'demo-user';
+      const userName = 'Demo User';
+
+      const postId = await createJourneyPost(userId, userName, data);
+      console.log('Post created:', postId);
+
+      setShowCreateModal(false);
+      Alert.alert('Success!', 'Your journey has been posted! ', [{ text: 'OK' }]);
+      handleRefresh();
+    } catch (error: any) {
+      console.error('Error creating post:', error);
+      Alert.alert(
+        'Failed to Post',
+        error?.message || 'Could not create post. Please check Firebase configuration.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const handleLike = async (postId: string) => {
+    try {
+      await likeJourneyPost(postId);
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId ? { ...post, likes: post.likes + 1 } : post
+        )
+      );
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
+  };
+
+  const handleComment = (postId: string) => {
+    console.log('Comment on post:', postId);
+  };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome to Pothole Map!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-
-      {/* Authentication temporarily disabled - will add back after fixing React Native persistence */}
-      {/* <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Your Account</ThemedText>
-        <ThemedText>Email: {user.email}</ThemedText>
-        {user.photoURL && (
-          <Image
-            source={{ uri: user.photoURL }}
-            style={styles.profileImage}
-          />
-        )}
-        <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
-          <Text style={styles.signOutButtonText}>Sign Out</Text>
-        </TouchableOpacity>
-      </ThemedView> */}
-
-      {/* App Features */}
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">🗺️ Map Features</ThemedText>
-        <ThemedText>
-          Navigate to the <ThemedText type="defaultSemiBold">Map</ThemedText> tab to:
-        </ThemedText>
-        <ThemedText>• View real-time pothole locations</ThemedText>
-        <ThemedText>• Plan safe routes avoiding potholes</ThemedText>
-        <ThemedText>• Track your location with compass</ThemedText>
-        <ThemedText>• Enable crash detection for safety</ThemedText>
-      </ThemedView>
-
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">🌤️ Trip Planner</ThemedText>
-        <ThemedText>
-          Navigate to the <ThemedText type="defaultSemiBold">Trip Planner</ThemedText> tab to:
-        </ThemedText>
-        <ThemedText>• Check weather conditions along your route</ThemedText>
-        <ThemedText>• Get AI-powered travel tips</ThemedText>
-        <ThemedText>• Receive clothing and packing suggestions</ThemedText>
-      </ThemedView>
-
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">🚀 Getting Started</ThemedText>
-        <ThemedText>
-          Start by exploring the map or planning your trip. The app will guide you with real-time
-          alerts and safety features.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <JourneyFeed
+        posts={posts}
+        loading={loading}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        onLoadMore={handleLoadMore}
+        onLike={handleLike}
+        onComment={handleComment}
+      />
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setShowCreateModal(true)}
+        activeOpacity={0.8}>
+        <Ionicons name="add" size={32} color="#FFFFFF" />
+      </TouchableOpacity>
+      <CreatePostModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreatePost}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#f5f5f5',
   },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  fab: {
     position: 'absolute',
-  },
-  profileImage: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginVertical: 8,
-  },
-  signOutButton: {
-    backgroundColor: '#f44336',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginTop: 12,
-    alignSelf: 'flex-start',
-  },
-  signOutButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    right: 20,
+    bottom: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#4285F4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
 });

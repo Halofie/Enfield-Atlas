@@ -1,3 +1,4 @@
+import { EmergencyAlertModal } from '@/components/crash/emergency-alert-modal';
 import { CrashDetectionControl } from '@/components/map/crash-detection-control';
 import { MapDisplay } from '@/components/map/map-display';
 import { RouteInputs } from '@/components/map/route-inputs';
@@ -6,10 +7,11 @@ import { useCrashDetection } from '@/hooks/use-crash-detection';
 import { useMapRouting } from '@/hooks/use-map-routing';
 import { usePotholeMarkers } from '@/hooks/use-pothole-markers';
 import { useRouteSafety } from '@/hooks/use-route-safety';
+import { CrashEvent } from '@/services/crash-detection.service';
 import { Pothole } from '@/types/pothole.types';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Keyboard, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function MapScreen() {
@@ -20,7 +22,10 @@ export default function MapScreen() {
     longitude: number;
   } | null>(null);
   const [mapHeading, setMapHeading] = useState(0); // Track map rotation
-  const [showSafetyView, setShowSafetyView] = useState(false); // Toggle safety features
+  const [showSafetyRoute, setShowSafetyRoute] = useState(false); // Toggle colored safety route
+  const [showScoreCard, setShowScoreCard] = useState(false); // Show/hide safety score card
+  const [showEmergencyAlert, setShowEmergencyAlert] = useState(false);
+  const [crashData, setCrashData] = useState<CrashEvent | null>(null);
   
   // Use a loose any here to avoid a hard dependency on react-native-maps types in the
   // starter; once the dependency and types are installed this can be tightened.
@@ -35,26 +40,11 @@ export default function MapScreen() {
   // Use custom hook for route safety analysis
   const { safetyAnalysis, analyzeSafety, clearAnalysis } = useRouteSafety();
 
-  // Use custom hook for crash detection
+  // Use custom hook for crash detection with emergency alert
   const crashDetection = useCrashDetection(false, (crash) => {
-    Alert.alert(
-      '🚨 Crash Detected!',
-      `Severity: ${crash.severity.toUpperCase()}\n` +
-      `Acceleration: ${crash.acceleration.magnitude.toFixed(2)}G\n` +
-      `Rotation: ${crash.rotation.magnitude.toFixed(1)}°/s\n\n` +
-      `Are you okay? Emergency services can be contacted if needed.`,
-      [
-        { text: "I'm OK", style: 'cancel' },
-        { 
-          text: 'Call Emergency', 
-          onPress: () => {
-            // TODO: Implement emergency call
-            Alert.alert('Emergency', 'Emergency services contact feature coming soon');
-          },
-          style: 'destructive'
-        }
-      ]
-    );
+    console.log('🚨 CRASH DETECTED - Opening Emergency Alert Modal');
+    setCrashData(crash);
+    setShowEmergencyAlert(true);
   });
 
   // Get user's current location on mount
@@ -114,28 +104,40 @@ export default function MapScreen() {
         }
       }, 300);
 
-      // Analyze route safety if safety view is enabled
-      if (showSafetyView) {
+      // Analyze route safety if safety route is enabled
+      if (showSafetyRoute) {
         analyzeSafety(result.route);
       }
     }
   }
 
   // Toggle safety view
-  function toggleSafetyView() {
-    const newState = !showSafetyView;
-    setShowSafetyView(newState);
-    
+  // Toggle colored safety route on tap
+  function toggleSafetyRoute() {
+    const newState = !showSafetyRoute;
+    setShowSafetyRoute(newState);
+
     if (newState && routeCoords.length > 0) {
       // Analyze current route
       analyzeSafety(routeCoords);
     } else if (!newState) {
       // Clear safety analysis when disabled
       clearAnalysis();
+      setShowScoreCard(false); // Hide score card when route is disabled
     }
   }
 
-  function handlePotholeMarkerPress(pothole: Pothole) {
+  // Show score card on long press
+  function handleLongPress() {
+    if (showSafetyRoute && safetyAnalysis) {
+      setShowScoreCard(true);
+    } else if (!showSafetyRoute && routeCoords.length > 0) {
+      // If route exists but safety view is off, turn it on and show score card
+      setShowSafetyRoute(true);
+      analyzeSafety(routeCoords);
+      setTimeout(() => setShowScoreCard(true), 100);
+    }
+  }  function handlePotholeMarkerPress(pothole: Pothole) {
     Alert.alert(
       `Pothole - ${pothole.severity.toUpperCase()}`,
       `Status: ${pothole.status}\n` +
@@ -215,12 +217,15 @@ export default function MapScreen() {
         onPotholePress={handlePotholeMarkerPress}
         userLocation={userLocation}
         onRegionChange={handleRegionChange}
-        safetyAnalysis={showSafetyView ? safetyAnalysis : undefined}
+        safetyAnalysis={showSafetyRoute ? safetyAnalysis : undefined}
       />
 
-      {/* Safety Score Card */}
-      {showSafetyView && safetyAnalysis && (
-        <SafetyScoreCard analysis={safetyAnalysis} />
+      {/* Safety Score Card - Only show when explicitly toggled via long press */}
+      {showScoreCard && safetyAnalysis && (
+        <SafetyScoreCard 
+          analysis={safetyAnalysis} 
+          onClose={() => setShowScoreCard(false)}
+        />
       )}
 
       {/* Crash Detection Control */}
@@ -236,17 +241,19 @@ export default function MapScreen() {
         baseline={crashDetection.baseline}
       />
 
-      {/* Safety toggle button */}
+      {/* Safety toggle button - Tap: toggle route colors, Long Press: show score card */}
       <TouchableOpacity 
-        style={[styles.safetyButton, showSafetyView && styles.safetyButtonActive]}
-        onPress={toggleSafetyView}
+        style={[styles.safetyButton, showSafetyRoute && styles.safetyButtonActive]}
+        onPress={toggleSafetyRoute}
+        onLongPress={handleLongPress}
+        delayLongPress={500}
         activeOpacity={0.7}
       >
         <View style={styles.safetyButtonInner}>
           <Ionicons 
-            name={showSafetyView ? "shield-checkmark" : "shield-outline"} 
+            name={showSafetyRoute ? "shield-checkmark" : "shield-outline"} 
             size={24} 
-            color={showSafetyView ? "#4CAF50" : "#1E88E5"} 
+            color={showSafetyRoute ? "#4CAF50" : "#1E88E5"} 
           />
         </View>
       </TouchableOpacity>
@@ -272,6 +279,16 @@ export default function MapScreen() {
           <Ionicons name="locate" size={24} color="#1E88E5" />
         </View>
       </TouchableOpacity>
+
+      {/* Emergency Alert Modal with Alarm & Auto Emergency Call */}
+      <EmergencyAlertModal
+        visible={showEmergencyAlert}
+        crashData={crashData}
+        onDismiss={() => {
+          setShowEmergencyAlert(false);
+          setCrashData(null);
+        }}
+      />
     </SafeAreaView>
   );
 }

@@ -3,15 +3,16 @@
  * Displays route safety analysis with score and statistics
  */
 
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { RouteSafetyAnalysis } from '../../services/safety-analysis.service';
 
 interface SafetyScoreCardProps {
   analysis: RouteSafetyAnalysis;
+  onClose?: () => void;
 }
 
-export function SafetyScoreCard({ analysis }: SafetyScoreCardProps) {
+export function SafetyScoreCard({ analysis, onClose }: SafetyScoreCardProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#4CAF50'; // Green
     if (score >= 60) return '#FF9800'; // Orange
@@ -40,7 +41,14 @@ export function SafetyScoreCard({ analysis }: SafetyScoreCardProps) {
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>🛡️ Route Safety Analysis</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>🛡️ Route Safety Analysis</Text>
+            {onClose && (
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Ionicons name="close-circle" size={28} color="#666" />
+              </TouchableOpacity>
+            )}
+          </View>
           {analysis.isNightTime && (
             <View style={styles.nightBadge}>
               <Text style={styles.nightBadgeText}>🌙 Night Mode</Text>
@@ -147,15 +155,23 @@ const styles = StyleSheet.create({
     maxHeight: '60%',
   },
   header: {
+    marginBottom: 16,
+  },
+  titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    flex: 1,
+  },
+  closeButton: {
+    padding: 4,
+    marginLeft: 8,
   },
   nightBadge: {
     backgroundColor: '#1a237e',
